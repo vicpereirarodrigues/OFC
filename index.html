@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>SELEÇÃO DE POLTRONAS - COMISSÃO DE TRANSPORTE DE IBIMIRIM</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --neon-green: #00ff9d;
+            --neon-blue: #00d4ff;
+            --neon-orange: #ff9f4a;
+            --dark-bg: #0a0e27;
+            --card-bg: rgba(15, 25, 45, 0.7);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body.dark {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        /* ============ AJUSTES RESPONSIVOS ============ */
+        @media (max-width: 768px) {
+            .admin-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 10px;
+                gap: 8px;
+            }
+            
+            .admin-info {
+                justify-content: center;
+                font-size: 12px;
+            }
+            
+            .admin-bar div:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+            
+            .admin-bar button {
+                padding: 8px 12px;
+                font-size: 12px;
+                margin: 0;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .main-title h1 {
+                font-size: 18px;
+                line-height: 1.3;
+                padding: 0 10px;
+            }
+            
+            .main-title p {
+                font-size: 12px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .dashboard-card {
+                padding: 12px;
+            }
+            
+            .dashboard-card h4 {
+                font-size: 14px;
+            }
+
+            .floating-buttons {
+                bottom: 15px;
+                right: 15px;
+                gap: 8px;
+            }
+            
+            .float-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .buses-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .bus-card {
+                border-radius: 15px;
+                width: 100%;
+            }
+            
+            .bus-header .bus-owner {
+                font-size: 20px;
+            }
+            
+            .bus-badge {
+                font-size: 10px;
+            }
+
+            /* Layout vertical das poltronas */
+            .seats {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 8px;
+                margin: 15px 0;
+            }
+            
+            .seat {
+                padding: 12px 5px;
+                font-size: 12px;
+                min-height: 55px;
+            }
+            
+            .seat::before {
+                font-size: 14px;
+            }
+
+            .legend {
+                gap: 12px;
+                font-size: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .legend-color {
+                width: 16px;
+                height: 16px;
+            }
+
+            .info {
+                padding: 12px;
+            }
+            
+            .info h4 {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+            
+            input {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            button {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons button {
+                width: 100%;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                font-size: 12px;
+                padding: 8px 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .stat-number {
+                font-size: 18px;
+            }
+
+            .passenger-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .passenger-card div:first-child {
+                width: 100%;
+            }
+            
+            .passenger-card button {
+                width: auto;
+                align-self: flex-end;
+            }
+
+            .passengers-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .search-box {
+                width: 100%;
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .copy-area {
+                padding: 12px;
+            }
+            
+            .copy-area h3 {
+                font-size: 14px;
+            }
+            
+            .copy-text {
+                font-size: 11px;
+                max-height: 200px;
+            }
+
+            .footer {
+                padding: 12px;
+                font-size: 12px;
+            }
+            
+            .footer .girl {
+                font-size: 18px;
+            }
+            
+            .subtext {
+                font-size: 10px;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-height: 85vh;
+                padding: 15px;
+            }
+            
+            .modal-content.large {
+                width: 95%;
+            }
+            
+            .modal-header h2 {
+                font-size: 18px;
+            }
+            
+            .close-modal {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .message {
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
+                font-size: 12px;
+                text-align: center;
+            }
+
+            canvas {
+                max-height: 180px !important;
+            }
+            
+            /* Ajuste dos botões de ação */
+            .bus-content button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            .bus-content .btn-green {
+                margin-top: 10px;
+            }
+        }
+
+        /* Tablet */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .buses-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .seats {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 10px;
+            }
+        }
+
+        /* Desktop */
+        @media (min-width: 1025px) {
+            .buses-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .seats {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+                gap: 10px;
+            }
+        }
+
+        /* ============ ESTILOS PRINCIPAIS ============ */
+        .admin-bar {
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 25px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-bar.active {
+            display: flex;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 200;
+        }
+
+        .float-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            font-size: 24px;
+            border: none;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+
+        .float-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: rgba(15, 25, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .modal-content.large {
+            max-width: 900px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00d4ff;
+        }
+
+        .close-modal {
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .main-title h1 {
+            font-size: 28px;
+            color: white;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .main-title p {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card {
+            background: rgba(15, 25, 45, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s;
+            color: white;
+        }
+
+        .occupation-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .occupation-fill {
+            background: linear-gradient(90deg, #00ff9d, #00d4ff);
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .buses-container {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .bus-card {
+            background: rgba(15, 25, 45, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .bus-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            padding: 15px;
+            text-align: center;
+        }
+
+        .bus-header .bus-owner {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #fff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bus-badge {
+            display: inline-block;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-top: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .bus-content {
+            padding: 15px;
+        }
+
+        /* Layout vertical das poltronas */
+        .seats {
+            display: grid;
+            gap: 8px;
+            margin: 15px 0;
+            max-height: none;
+            overflow-y: visible;
+        }
+        
+        .seat {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 10px 5px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.2s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .seat::before {
+            content: '💺';
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .seat.selected {
+            background: linear-gradient(135deg, #00ff9d, #00d4ff);
+            animation: pulse 0.5s ease;
+            box-shadow: 0 0 15px rgba(0,255,157,0.5);
+        }
+
+        .seat.occupied {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .seat.unavailable {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: white;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .info {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            color: white;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-green { background: linear-gradient(135deg, #00ff9d, #00d4ff); }
+        .btn-red { background: linear-gradient(135deg, #ff6b6b, #ff4757); }
+        .btn-orange { background: linear-gradient(135deg, #ff9f4a, #ff6b6b); }
+
+        .passengers-section {
+            background: rgba(15, 25, 45, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .stat-number {
+            font-size: 22px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00ff9d, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .passenger-card {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+            padding: 5px 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .copy-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(15, 25, 45, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .copy-text {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            color: #00ff9d;
+        }
+
+        .message {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: none;
+            z-index: 2000;
+            background: rgba(15, 25, 45, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            border-left: 4px solid;
+        }
+
+        .message.success { border-left-color: #00ff9d; }
+        .message.error { border-left-color: #ff6b6b; }
+        .message.info { border-left-color: #00d4ff; }
+
+        .search-box {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .passengers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 35px;
+            background: rgba(10, 14, 39, 0.5);
+            backdrop-filter: blur(10px);
+            color: white;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer .girl {
+            display: inline-block;
+            margin-left: 10px;
+            animation: wiggle 1s infinite ease-in-out;
+            font-size: 24px;
+        }
+        
+        .subtext {
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        @keyframes wiggle {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-3px) rotate(2deg); }
+        }
+
+        canvas {
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra de Admin -->
+    <div id="adminBar" class="admin-bar">
+        <div class="admin-info">
+            <span>🔐 Modo Administrador</span>
+            <span class="admin-badge">⚠️ Você pode apagar reservas</span>
+        </div>
+        <div>
+            <button class="btn-orange" onclick="openAdminPanel()">⚙️ Painel</button>
+            <button class="btn-green" onclick="exportBackup()">💾 Backup</button>
+            <button class="btn-red" onclick="logoutAdmin()">🚪 Sair</button>
+        </div>
+    </div>
+
+    <!-- Botões Flutuantes -->
+    <div class="floating-buttons">
+        <button class="float-btn" onclick="openAdminLogin()" style="background: rgba(0,0,0,0.6);">🔐</button>
+        <button class="float-btn" onclick="toggleTheme()" style="background: rgba(0,0,0,0.6);">🌓</button>
+    </div>
+
+    <!-- Modais -->
+    <div id="adminLoginModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Área do Administrador</h2>
+                <button class="close-modal" onclick="closeAdminLogin()">✕</button>
+            </div>
+            <p>Digite a senha para acessar</p>
+            <input type="password" id="adminPassword" placeholder="Senha" style="margin: 15px 0;">
+            <button onclick="verifyAdminLogin()" class="btn-green" style="width: 100%;">Entrar</button>
+            <div id="adminLoginError" style="color: #ff6b6b; margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <div id="adminPanelModal" class="modal-overlay">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>⚙️ Painel do Administrador</h2>
+                <button class="close-modal" onclick="closeAdminPanel()">✕</button>
+            </div>
+            <div style="margin: 20px 0;">
+                <h3>⚠️ Ações de Exclusão</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="clearAllReservations()" style="background: #dc3545;">🗑️ APAGAR TODAS</button>
+                    <button onclick="clearBusReservations('maciel')" style="background: #ff9800;">🗑️ Limpar Maciel</button>
+                    <button onclick="clearBusReservations('felipe')" style="background: #4caf50;">🗑️ Limpar Felipe</button>
+                    <button onclick="clearBusReservations('robson')" style="background: #2196f3;">🗑️ Limpar Robson</button>
+                    <button onclick="clearBusReservations('compact')" style="background: #ff6b6b;">🗑️ Limpar Vagas Apertadas</button>
+                </div>
+            </div>
+            <div>
+                <h3>📋 Lista Completa de Reservas</h3>
+                <div id="adminReservationsList" style="max-height: 400px; overflow-y: auto; margin-top: 15px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="container">
+        <div class="main-title">
+            <h1>SELEÇÃO DE POLTRONAS</h1>
+            <p>Comissão de Transporte de Ibimirim</p>
+        </div>
+
+        <div class="dashboard-grid" id="dashboardGrid"></div>
+        <div class="buses-container" id="busesContainer"></div>
+
+        <div class="passengers-section">
+            <div class="passengers-header">
+                <h2>📋 LISTA DE PASSAGEIROS</h2>
+                <input type="text" id="searchPassenger" class="search-box" placeholder="🔍 Buscar por nome, telefone ou ônibus..." onkeyup="applyFilters()">
+            </div>
+            <div class="stats" id="stats"></div>
+            <div class="action-buttons">
+                <button onclick="refreshAllLists()" class="btn-green">🔄 Atualizar</button>
+                <button onclick="copyCompleteList()" class="btn-orange">📋 Copiar Lista</button>
+                <button onclick="exportToExcel()" class="btn-green">📊 Exportar</button>
+                <button onclick="printList()" class="btn-orange">🖨️ Imprimir</button>
+            </div>
+            <div id="passengersList" class="passengers-list"></div>
+        </div>
+
+        <div class="copy-area">
+            <h3>📋 LISTA COMPLETA PARA COPIAR</h3>
+            <div id="copyText" class="copy-text"></div>
+            <button onclick="copyToClipboard()" style="margin-top: 10px;">📋 COPIAR</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>Créditos: Maria Viviane Victória Pereira Rodrigues</span>
+        <span class="girl">👩🏻‍🦱</span>
+        <div class="subtext">Engenheira de Software | Sistema em Tempo Real</div>
+    </div>
+    <div id="message" class="message"></div>
+
+    <script>
+        // ============ CONFIGURAÇÕES SUPABASE ============
+        const SUPABASE_URL = 'https://fmytzcxdiehidxkyzuzb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZteXR6Y3hkaWVoaWR4a3l6dXpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDM4ODYsImV4cCI6MjA5MDExOTg4Nn0.npoxw3rFLBHlEJIw_KgvbautDkjvz3Sm2CR5Id0Y3Uk';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const ADMIN_PASSWORD = 'admin123';
+        let isAdminLogged = false;
+        let chart = null;
+        
+        const availableSeatsList = [1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22, 23, 25, 26, 28, 29, 31, 32, 34, 35, 37, 38, 40, 41, 43, 44, 46, 47, 49, 50, 52, 53, 55, 56, 58, 59];
+        const compactSeatsList = Array.from({length: 20}, (_, i) => i + 1);
+        
+        const buses = {
+            maciel: { id: 'maciel', name: 'MACIEL', color: '#ff9800', type: 'normal', seatCount: 40,
+                availableSeats: new Set(availableSeatsList),
+                occupiedSeats: new Set(), reservations: [] },
+            felipe: { id: 'felipe', name: 'FELIPE', color: '#4caf50', type: 'normal', seatCount: 40,
+                availableSeats: new Set(availableSeatsList),
+                occupiedSeats: new Set(), reservations: [] },
+            robson: { id: 'robson', name: 'ROBSON', color: '#2196f3', type: 'normal', seatCount: 40,
+                availableSeats: new Set(availableSeatsList),
+                occupiedSeats: new Set(), reservations: [] },
+            compact: { id: 'compact', name: 'VAGAS APERTADAS', color: '#ff6b6b', type: 'compact', seatCount: 20,
+                availableSeats: new Set(compactSeatsList),
+                occupiedSeats: new Set(), reservations: [] }
+        };
+        
+        let selectedSeats = { maciel: new Set(), felipe: new Set(), robson: new Set(), compact: new Set() };
+        
+        // ============ FUNÇÕES DO SUPABASE ============
+        async function loadReservations() {
+            try {
+                const { data, error } = await supabaseClient.from('reservations').select('*').order('created_at', { ascending: false });
+                if (error) return [];
+                return data || [];
+            } catch (err) { return []; }
+        }
+        
+        async function loadBusData() {
+            const reservations = await loadReservations();
+            for (let busId in buses) {
+                buses[busId].occupiedSeats.clear();
+                buses[busId].reservations = [];
+            }
+            reservations.forEach(res => {
+                let busId = null;
+                if (res.bus_name === 'MACIEL') busId = 'maciel';
+                else if (res.bus_name === 'FELIPE') busId = 'felipe';
+                else if (res.bus_name === 'ROBSON') busId = 'robson';
+                else if (res.bus_name === 'VAGAS APERTADAS') busId = 'compact';
+                if (busId && buses[busId]) {
+                    res.seats.forEach(seat => buses[busId].occupiedSeats.add(seat));
+                    buses[busId].reservations.push({
+                        id: res.id,
+                        passengerName: res.passenger_name,
+                        passengerPhone: res.passenger_phone,
+                        seats: res.seats,
+                        bus: res.bus_name,
+                        date: new Date(res.created_at).toLocaleString('pt-BR')
+                    });
+                }
+            });
+            renderBuses();
+            refreshAllLists();
+            updateChart();
+        }
+        
+        // ============ FUNÇÃO DE SELEÇÃO - APENAS 1 POLTRONA ============
+        function toggleSeat(busId, num) {
+            // Verifica se a poltrona já está ocupada
+            if (buses[busId].occupiedSeats.has(num)) {
+                showMessage(`Poltrona ${num} já está ocupada!`, 'error');
+                return;
+            }
+            
+            // Verifica se a poltrona já está selecionada
+            if (selectedSeats[busId].has(num)) {
+                // Se já está selecionada, remove a seleção
+                selectedSeats[busId].delete(num);
+                showMessage(`Poltrona ${num} removida`, 'info');
+            } else {
+                // Se não está selecionada, limpa todas as seleções anteriores (garante apenas 1)
+                if (selectedSeats[busId].size > 0) {
+                    // Remove todas as seleções anteriores
+                    selectedSeats[busId].clear();
+                    showMessage(`Apenas 1 poltrona por vez. Seleção anterior removida.`, 'info');
+                }
+                // Seleciona a nova poltrona
+                selectedSeats[busId].add(num);
+                showMessage(`Poltrona ${num} selecionada`, 'success');
+            }
+            updateDisplay(busId);
+        }
+        
+        // ============ FUNÇÃO DE RESERVA - APENAS 1 POLTRONA ============
+        async function confirmReservation(busId) {
+            // Verifica se exatamente 1 poltrona foi selecionada
+            if (selectedSeats[busId].size === 0) {
+                showMessage('⚠️ Selecione uma poltrona primeiro!', 'error');
+                return;
+            }
+            
+            if (selectedSeats[busId].size > 1) {
+                showMessage('⚠️ Selecione apenas UMA poltrona por vez!', 'error');
+                return;
+            }
+            
+            const name = document.getElementById(`name_${busId}`).value.trim();
+            const phone = document.getElementById(`phone_${busId}`).value.trim();
+            
+            if (!name || !phone) {
+                showMessage('⚠️ Preencha nome e telefone!', 'error');
+                return;
+            }
+            
+            const seatsList = Array.from(selectedSeats[busId]).sort((a,b)=>a-b);
+            
+            // Verificar se a poltrona já está ocupada (double-check)
+            if (buses[busId].occupiedSeats.has(seatsList[0])) {
+                showMessage(`⚠️ Poltrona ${seatsList[0]} já foi reservada por outra pessoa!`, 'error');
+                selectedSeats[busId].clear();
+                updateDisplay(busId);
+                await loadBusData();
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('reservations')
+                    .insert({
+                        passenger_name: name.toUpperCase(),
+                        passenger_phone: phone,
+                        bus_name: buses[busId].name,
+                        seats: seatsList
+                    });
+                
+                if (error) {
+                    console.error('Erro ao inserir:', error);
+                    showMessage('Erro ao salvar reserva: ' + error.message, 'error');
+                    await loadBusData();
+                    return;
+                }
+                
+                showMessage(`✅ Reserva confirmada! Poltrona ${seatsList[0]} reservada para ${name.toUpperCase()}`, 'success');
+                
+                // Limpar seleção e campos
+                selectedSeats[busId].clear();
+                document.getElementById(`name_${busId}`).value = '';
+                document.getElementById(`phone_${busId}`).value = '';
+                
+                // Recarregar dados
+                await loadBusData();
+                
+            } catch (err) {
+                console.error('Erro de rede:', err);
+                showMessage('Erro de conexão. Verifique sua internet.', 'error');
+            }
+        }
+        
+        function clearSelection(busId) {
+            if (selectedSeats[busId].size > 0) {
+                selectedSeats[busId].clear();
+                updateDisplay(busId);
+                showMessage('Seleção limpa!', 'info');
+            }
+        }
+        
+        // ============ FUNÇÃO DE DISPLAY ============
+        function updateDisplay(busId) {
+            createSeats(busId);
+            const div = document.getElementById(`selectedSeats_${busId}`);
+            const seats = Array.from(selectedSeats[busId]).sort((a,b)=>a-b);
+            if (seats.length === 0) {
+                div.innerHTML = 'Nenhuma poltrona selecionada';
+            } else if (seats.length === 1) {
+                div.innerHTML = `✨ Poltrona selecionada: ${seats[0]} ✨`;
+            } else {
+                div.innerHTML = `⚠️ Selecione apenas UMA poltrona! Atual: ${seats.join(', ')}`;
+                // Auto-corrige se houver mais de uma
+                if (seats.length > 1) {
+                    const keepSeat = seats[0];
+                    selectedSeats[busId].clear();
+                    selectedSeats[busId].add(keepSeat);
+                    updateDisplay(busId);
+                }
+            }
+        }
+        
+        async function deleteReservation(busName, id) {
+            if (!isAdminLogged) { showMessage('Acesso negado!', 'error'); return; }
+            try { await supabaseClient.from('reservations').delete().eq('id', id); await loadBusData(); showMessage('Reserva removida!', 'success'); } 
+            catch (err) { showMessage('Erro!', 'error'); }
+        }
+        
+        async function clearBusReservations(busId) {
+            if (!isAdminLogged) return;
+            const busName = buses[busId].name;
+            if (confirm(`Apagar TODAS as reservas do ônibus ${busName}?`)) {
+                try { await supabaseClient.from('reservations').delete().eq('bus_name', busName); await loadBusData(); showMessage(`Reservas do ônibus ${busName} removidas!`, 'success'); } 
+                catch (err) { showMessage('Erro!', 'error'); }
+            }
+        }
+        
+        async function clearAllReservations() {
+            if (!isAdminLogged) return;
+            if (confirm('⚠️ APAGAR TODAS AS RESERVAS?')) {
+                try { await supabaseClient.from('reservations').delete().neq('id', 0); await loadBusData(); showMessage('Todas reservas removidas!', 'success'); } 
+                catch (err) { showMessage('Erro!', 'error'); }
+            }
+        }
+        
+        function createSeats(busId) {
+            const container = document.getElementById(`seats_${busId}`);
+            if (!container) return;
+            container.innerHTML = '';
+            const bus = buses[busId];
+            const seatNumbers = Array.from(bus.availableSeats).sort((a,b)=>a-b);
+            seatNumbers.forEach(num => {
+                const seat = document.createElement('div');
+                seat.className = 'seat';
+                seat.textContent = num;
+                if (bus.occupiedSeats.has(num)) seat.classList.add('occupied');
+                if (selectedSeats[busId].has(num)) seat.classList.add('selected');
+                if (!bus.occupiedSeats.has(num)) seat.onclick = () => toggleSeat(busId, num);
+                container.appendChild(seat);
+            });
+        }
+        
+        function getAllReservations() {
+            let all = [];
+            for (let busId in buses) all = [...all, ...buses[busId].reservations];
+            return all.sort((a,b) => new Date(b.date) - new Date(a.date));
+        }
+        
+        function refreshAllLists() { showPassengersList(); updateStats(); updateCopyText(); updateDashboard(); }
+        
+        function showPassengersList() {
+            const all = getAllReservations();
+            const searchTerm = document.getElementById('searchPassenger')?.value.toLowerCase() || '';
+            let filtered = searchTerm ? all.filter(r => r.passengerName.toLowerCase().includes(searchTerm) || r.passengerPhone.includes(searchTerm) || r.bus.toLowerCase().includes(searchTerm)) : all;
+            const listDiv = document.getElementById('passengersList');
+            if (filtered.length === 0) { listDiv.innerHTML = '<p style="text-align:center;padding:20px;">Nenhum passageiro</p>'; return; }
+            listDiv.innerHTML = filtered.map(r => {
+                const deleteBtn = isAdminLogged ? `<button class="delete-btn" onclick="deleteReservation('${r.bus}', ${r.id})">🗑️</button>` : '';
+                return `<div class="passenger-card"><div><strong>${r.passengerName}</strong><br>📞 ${r.passengerPhone}<br>🚌 ${r.bus} | 💺 ${r.seats.join(', ')}<br>📅 ${r.date}</div>${deleteBtn}</div>`;
+            }).join('');
+        }
+        
+        function updateStats() {
+            const all = getAllReservations();
+            const unique = new Set(all.map(r => r.passengerName));
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card"><span>👥 Total:</span><span class="stat-number">${all.length}</span></div>
+                <div class="stat-card"><span>👤 Pessoas:</span><span class="stat-number">${unique.size}</span></div>
+                <div class="stat-card"><span>📌 Maciel:</span><span class="stat-number">${buses.maciel.reservations.length}</span></div>
+                <div class="stat-card"><span>📌 Felipe:</span><span class="stat-number">${buses.felipe.reservations.length}</span></div>
+                <div class="stat-card"><span>📌 Robson:</span><span class="stat-number">${buses.robson.reservations.length}</span></div>
+                <div class="stat-card"><span>⚡ Vagas:</span><span class="stat-number">${buses.compact.reservations.length}</span></div>
+            `;
+        }
+        
+        function updateDashboard() {
+            const totalSeats = (availableSeatsList.length * 3) + 20;
+            let totalOccupied = 0;
+            for (let busId in buses) totalOccupied += buses[busId].occupiedSeats.size;
+            const occupancyPercent = (totalOccupied / totalSeats * 100).toFixed(1);
+            document.getElementById('dashboardGrid').innerHTML = `
+                <div class="dashboard-card"><h4>📊 Ocupação Geral</h4><div class="occupation-bar"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>${totalOccupied}/${totalSeats}</span><span>${occupancyPercent}%</span></div><div class="occupation-fill" style="width:${occupancyPercent}%"></div></div></div>
+                <div class="dashboard-card"><h4>📌 Ocupação por Ônibus</h4><div><strong>Maciel:</strong> ${buses.maciel.occupiedSeats.size}/${availableSeatsList.length}</div><div><strong>Felipe:</strong> ${buses.felipe.occupiedSeats.size}/${availableSeatsList.length}</div><div><strong>Robson:</strong> ${buses.robson.occupiedSeats.size}/${availableSeatsList.length}</div><div><strong>⚡ Vagas:</strong> ${buses.compact.occupiedSeats.size}/20</div></div>
+                <div class="dashboard-card"><h4>📈 Gráfico</h4><canvas id="occupationChart"></canvas></div>
+            `;
+            setTimeout(() => updateChart(), 100);
+        }
+        
+        function updateChart() {
+            const ctx = document.getElementById('occupationChart');
+            if (!ctx) return;
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['Maciel', 'Felipe', 'Robson', 'Vagas'], datasets: [{ data: [buses.maciel.occupiedSeats.size, buses.felipe.occupiedSeats.size, buses.robson.occupiedSeats.size, buses.compact.occupiedSeats.size], backgroundColor: ['#ff9800', '#4caf50', '#2196f3', '#ff6b6b'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: 'white', font: { size: 10 } } } } }
+            });
+        }
+        
+        function updateCopyText() {
+            const all = getAllReservations();
+            if (all.length === 0) { document.getElementById('copyText').innerHTML = 'Nenhum passageiro.'; return; }
+            let text = `${'='.repeat(60)}\nLISTA DE PASSAGEIROS\n${'='.repeat(60)}\n\n`;
+            ['MACIEL', 'FELIPE', 'ROBSON', 'VAGAS APERTADAS'].forEach(bus => {
+                const busRes = all.filter(r => r.bus === bus);
+                if (busRes.length) {
+                    text += `\n📌 ÔNIBUS ${bus}\n${'-'.repeat(40)}\n`;
+                    busRes.forEach((r, i) => text += `${i+1}. ${r.passengerName}\n   📞 ${r.passengerPhone} | 💺 ${r.seats.join(', ')} | 📅 ${r.date}\n`);
+                }
+            });
+            text += `\n${'='.repeat(60)}\nTOTAL: ${all.length} reservas\n${'='.repeat(60)}`;
+            document.getElementById('copyText').innerHTML = text.replace(/\n/g, '<br>');
+        }
+        
+        function copyToClipboard() { const text = document.getElementById('copyText').innerHTML.replace(/<br>/g, '\n'); navigator.clipboard.writeText(text); showMessage('📋 Lista copiada!', 'success'); }
+        function copyCompleteList() { copyToClipboard(); }
+        function applyFilters() { showPassengersList(); }
+        
+        function exportToExcel() {
+            const all = getAllReservations();
+            if (all.length === 0) { showMessage('Nenhuma reserva!', 'error'); return; }
+            let csv = "NOME,TELEFONE,ÔNIBUS,POLTRONAS,DATA\n";
+            all.forEach(r => csv += `"${r.passengerName}","${r.passengerPhone}","${r.bus}","${r.seats.join('; ')}","${r.date}"\n`);
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `reservas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+            showMessage('📊 Exportado!', 'success');
+        }
+        
+        function printList() {
+            const all = getAllReservations();
+            if (all.length === 0) { showMessage('Nenhuma reserva!', 'error'); return; }
+            let html = `<html><head><title>Lista de Passageiros</title><style>body{font-family:Arial;margin:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background:#667eea;color:white}</style></head><body><h1>Lista de Passageiros</h1><p>Data: ${new Date().toLocaleString()}</p> <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;"><thead><tr style="background:#667eea; color:white;"><th>#</th><th>NOME</th><th>TELEFONE</th><th>ÔNIBUS</th><th>POLTRONAS</th>  </tr></thead><tbody>`;
+            all.forEach((r, i) => html += `  <tr><td>${i+1}</td><td>${r.passengerName}</td><td>${r.passengerPhone}</td><td>${r.bus}</td><td>${r.seats.join(', ')}</td></tr>`);
+            html += `</tbody></table><p>Total: ${all.length}</p></body></html>`;
+            const w = window.open('', '_blank'); w.document.write(html); w.print();
+        }
+        
+        function exportBackup() { const data = { reservations: getAllReservations() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${new Date().toISOString().slice(0,19)}.json`; a.click(); showMessage('💾 Backup exportado!', 'success'); }
+        
+        function renderBuses() {
+            const container = document.getElementById('busesContainer');
+            container.innerHTML = '';
+            ['maciel', 'felipe', 'robson', 'compact'].forEach(busId => {
+                const bus = buses[busId];
+                container.innerHTML += `
+                    <div class="bus-card">
+                        <div class="bus-header"><div class="bus-owner">${bus.name}</div><div class="bus-badge">${bus.type === 'compact' ? '⚡ 20 vagas' : '✨ 40 poltronas'}</div></div>
+                        <div class="bus-content">
+                            <div class="legend"><div class="legend-item"><span class="legend-color" style="background:linear-gradient(135deg,#2c3e50,#3498db);"></span> Disponível</div><div class="legend-item"><span class="legend-color" style="background:linear-gradient(135deg,#00ff9d,#00d4ff);"></span> Selecionada</div><div class="legend-item"><span class="legend-color" style="background:linear-gradient(135deg,#e74c3c,#c0392b);"></span> Ocupada</div></div>
+                            <div id="seats_${busId}" class="seats"></div>
+                            <div class="info"><h4>📍 Poltrona selecionada:</h4><div id="selectedSeats_${busId}">Nenhuma</div><input type="text" id="name_${busId}" placeholder="Nome completo"><input type="text" id="phone_${busId}" placeholder="Telefone"><button onclick="confirmReservation('${busId}')" class="btn-green">✅ Confirmar Reserva</button><button onclick="clearSelection('${busId}')">🔄 Limpar Seleção</button></div>
+                        </div>
+                    </div>
+                `;
+            });
+            ['maciel', 'felipe', 'robson', 'compact'].forEach(busId => createSeats(busId));
+        }
+        
+        // ============ ADMIN ============
+        function openAdminLogin() { document.getElementById('adminLoginModal').classList.add('active'); }
+        function closeAdminLogin() { document.getElementById('adminLoginModal').classList.remove('active'); }
+        function verifyAdminLogin() {
+            if (document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
+                isAdminLogged = true; sessionStorage.setItem('adminLogged', 'true'); closeAdminLogin(); document.getElementById('adminBar').classList.add('active'); refreshAllLists(); showMessage('🔐 Modo Admin ativado!', 'success');
+            } else { document.getElementById('adminLoginError').textContent = 'Senha incorreta!'; }
+        }
+        function logoutAdmin() { isAdminLogged = false; sessionStorage.removeItem('adminLogged'); document.getElementById('adminBar').classList.remove('active'); refreshAllLists(); showMessage('Modo Admin desativado.', 'success'); }
+        function openAdminPanel() { if (!isAdminLogged) { openAdminLogin(); return; } const all = getAllReservations(); document.getElementById('adminReservationsList').innerHTML = all.map(r => `<div style="border:1px solid rgba(255,255,255,0.1);margin:10px;padding:10px;border-radius:8px;"><strong>${r.passengerName}</strong><br>📞 ${r.passengerPhone}<br>📌 ${r.bus} | 💺 ${r.seats.join(', ')}<br>📅 ${r.date}<br><button onclick="deleteReservation('${r.bus}', ${r.id})" style="background:#ff6b6b;margin-top:5px;">🗑️ Apagar</button></div>`).join('') || '<p>Nenhuma reserva</p>'; document.getElementById('adminPanelModal').classList.add('active'); }
+        function closeAdminPanel() { document.getElementById('adminPanelModal').classList.remove('active'); }
+        function toggleTheme() { document.body.classList.toggle('dark'); localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); }
+        function loadTheme() { if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark'); }
+        function showMessage(text, type) { const msg = document.getElementById('message'); msg.textContent = text; msg.className = `message ${type}`; msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+        function checkAdminSession() { if (sessionStorage.getItem('adminLogged') === 'true') { isAdminLogged = true; document.getElementById('adminBar').classList.add('active'); refreshAllLists(); } }
+        
+        async function init() { loadTheme(); await loadBusData(); checkAdminSession(); refreshAllLists(); showMessage('✅ Sistema pronto! Selecione apenas 1 poltrona por vez.', 'success'); }
+        init();
+    </script>
+</body>
+</html>
